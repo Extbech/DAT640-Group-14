@@ -46,5 +46,4 @@ def load_collection(
                 print(f"processing document {index}")
                 break
             docno, text = line.rstrip().split("\t")
-            print(preprocess_text(text))
             yield {"docno": docno, "text": preprocess_text(text)}

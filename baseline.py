@@ -16,7 +16,7 @@ def init_indexer():
     if not os.path.exists(index_path):
         print("Indexing documents...")
         iter_indexer = pt.IterDictIndexer(index_path)
-        return iter_indexer.index(load_collection(dataset_path, False, 2))
+        return iter_indexer.index(load_collection(dataset_path))
     else:
         print("Loading Index from disk...")
         return pt.IndexFactory.of(index_path)
@@ -31,6 +31,5 @@ if __name__ == "__main__":
     init_pyterrier()
     index_ref = init_indexer()
     bm_model = init_scorer(index_ref)
-    
-    ret = bm_model.search("post")
+    ret = bm_model.search("test")
     print(ret)
