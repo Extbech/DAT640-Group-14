@@ -18,7 +18,7 @@ if __name__ == "__main__":
     if not os.path.exists(index_path):
         print("Indexing documents...")
         iter_indexer = pt.IterDictIndexer(index_path)
-        index_ref = iter_indexer.index(load_collection(dataset_path, False, 10000))
+        index_ref = iter_indexer.index(load_collection(dataset_path, False, 2))
     else:
         print("Loading Index from disk...")
         index_ref = pt.IndexFactory.of(index_path)
