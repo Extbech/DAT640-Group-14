@@ -2,10 +2,12 @@ from typing import Dict, Generator
 import re
 import nltk
 nltk.download("stopwords")
+nltk.download('wordnet')
+from nltk.stem import WordNetLemmatizer
 STOPWORDS = set(nltk.corpus.stopwords.words("english"))
 
 
-def preprocess_text(text: str) -> str:
+def preprocess_text(text: str, lemmatizer) -> str:
     """Preprocesses a string of text.
 
     Args:
@@ -15,9 +17,9 @@ def preprocess_text(text: str) -> str:
         preprocessed string.
     """
     return " ".join([
-        term
+        lemmatizer.lemmatize(term)
         for term in re.sub(r"[^\w]|_", " ", text).lower().split()
-        if term not in STOPWORDS
+        if term not in STOPWORDS and not re.search(r'\d', term)
     ])
 
 def load_collection(
@@ -39,6 +41,7 @@ def load_collection(
             - 'docno' (str): The document identifier.
             - 'text' (str): The document's text content.
     """
+    lemmatizer = WordNetLemmatizer()
     with open(path) as f:
         lines = f.readlines()
         for index, line in enumerate(lines):
@@ -46,4 +49,4 @@ def load_collection(
                 print(f"processing document {index}")
                 break
             docno, text = line.rstrip().split("\t")
-            yield {"docno": docno, "text": preprocess_text(text)}
+            yield {"docno": docno, "text": preprocess_text(text, lemmatizer)}
