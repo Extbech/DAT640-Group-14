@@ -1,2 +1,3 @@
 nltk
+pandas
 python_terrier
