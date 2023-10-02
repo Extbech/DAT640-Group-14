@@ -42,7 +42,6 @@ def run_queries(bm_model, index):
     topics = pd.read_csv(queries_path)
     topics = topics[["qid", "query"]]
     topics["query"] = topics["query"].apply(lambda x: preprocess_text(x))
-    topics["query"] = topics["query"].apply(lambda x: " ".join([stemmer.stem(word) for word in x]))
 
     qrels = pt.io.read_qrels(qrels_path)
     res = bm_model.transform(topics)
