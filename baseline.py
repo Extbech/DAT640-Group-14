@@ -3,7 +3,7 @@ import os
 from helper import *
 import pandas as pd
 from nltk.stem import WordNetLemmatizer
-from pyterrier.measures import *
+from pyterrier.measures import Recall, AP, RR, nDCG
 import logging
 logging.basicConfig(filename='baseline.log', format='%(asctime)s %(message)s', level=logging.INFO)
 
@@ -28,7 +28,6 @@ def init_scorer(index, model):
     print(f"Initializing Scorer: {model}...")
     bm25 = pt.BatchRetrieve(index, wmodel=model)
     return bm25
-
 
 def score_queries(model):
     lemmatizer = WordNetLemmatizer()
