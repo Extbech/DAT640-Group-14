@@ -30,15 +30,15 @@ def init_scorer(index, model):
     return bm25
 
 
-def score_queries(bm_model):
+def score_queries(model):
     lemmatizer = WordNetLemmatizer()
     queries_path = "datasets/queries_train.csv"
     topics = pd.read_csv(queries_path)
     topics = topics[["qid", "query"]]
     topics["query"] = topics["query"].apply(lambda x: preprocess_text(x, lemmatizer))
 
-    res = bm_model.transform(topics)
-    pt.io.write_results(res, "datasets/trec_result.txt", format="trec")
+    res = model.transform(topics)
+    pt.io.write_results(res, f"results/trec_result_{model}.txt", format="trec")
     return res
 
 def evaluate_result(result):
@@ -55,7 +55,7 @@ if __name__ == "__main__":
     bm_model = init_scorer(index, "BM25")
     tf_idf = init_scorer(index, "TF_IDF")
 
-    print("Bm results...")
+    print("BM25 results...")
     result_bm = score_queries(bm_model)
     eval_bm = evaluate_result(result_bm)
     print(eval_bm)
