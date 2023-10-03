@@ -5,7 +5,6 @@ import pandas as pd
 from nltk.stem import WordNetLemmatizer
 import logging
 logging.basicConfig(filename='baseline.log', format='%(asctime)s %(message)s', level=logging.INFO)
-## os.environ["JAVA_HOME"] = "/usr/lib/jvm/java-11-openjdk-amd64/"
 
 
 def init_pyterrier():
@@ -25,18 +24,17 @@ def init_indexer():
     return pt.IndexFactory.of(index_path)
 
 def init_scorer_bm25(index):
-    # Todo
-    print("Initializing Scorer...")
+    print("Initializing BM25...")
     bm25 = pt.BatchRetrieve(index, wmodel="BM25")
     return bm25
 
 def init_scorer_tf_idf(index):
-    # Todo
+    print("Initializing TF-IDF...")
     tf_idf = pt.BatchRetrieve(index, wmodel="TF_IDF")
     return tf_idf
 
 
-def run_queries(bm_model, index):
+def evalute_bm25(bm_model):
     queries_path = "datasets/queries_train.csv"
     qrels_path = "datasets/qrels_train.txt"
     topics = pd.read_csv(queries_path)
@@ -47,10 +45,6 @@ def run_queries(bm_model, index):
     res = bm_model.transform(topics)
     eval = pt.Utils.evaluate(res, qrels, metrics = ['map'])
     print(eval)
-
-
-def eval_queries():
-    pass
 
 
 def query_experiment(bm25, tf_idf):
@@ -77,8 +71,6 @@ if __name__ == "__main__":
     init_pyterrier()
     index = init_indexer()
     #logging.info(index.getCollectionStatistics())
-    #for kv in index.getLexicon():
-    #    print((kv.getKey()))
 
     bm_model = init_scorer_bm25(index)
     tf_idf = init_scorer_tf_idf(index)
