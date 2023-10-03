@@ -14,8 +14,18 @@ You can set the JAVA_HOME environment variable to point to your Java installatio
 ```bash
 export JAVA_HOME="<path>"
 ```
+To install the required dependancies and libraries you can run the following command:
+```bash
+pip install -r requirements.txt
+```
+
 ### Dataset
-Due to the large size of the dataset, it is not hosted on GitHub. To use the project, you will need to provide your dataset and place it in a folder called `/datasets`. Ensure that your dataset is in TSV (Tab-Separated Values) format.
+Due to the large size of the dataset, it is not hosted on GitHub. To use the project, you will need to provide your dataset and place it in a folder called `/datasets`. Files required in the directory are:
+
+- `collection.tsv`
+- `qrels_train.txt`
+- `queries_train.csv`
+- `queries_test.csv`
 
 ## Usage
 
