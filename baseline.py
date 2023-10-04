@@ -45,7 +45,7 @@ def score_queries(model):
     res = model.transform(topics)
     create_dir_if_not_exists("results")
     print(f"Writing Query Results to results/trec_result_{model}.txt...")
-    pt.io.write_results(res, f"results/trec_result_{model}.txt", format="trec")
+    pt.io.write_results(res, f"results/trec_result_{model}.txt", format="trec", run_name="BM25")
     return res
 
 
@@ -66,7 +66,7 @@ if __name__ == "__main__":
 
     print("\nBM25 results...")
     result_bm = score_queries(bm_model)
-    
+
     eval_bm = evaluate_result(result_bm)
     print(f"Evaluation Results: {eval_bm}")
 
