@@ -37,6 +37,8 @@ def score_queries(model):
     topics["query"] = topics["query"].apply(lambda x: preprocess_text(x, lemmatizer))
 
     res = model.transform(topics)
+    create_dir_if_not_exists("results")
+    print(f"Writing Query Results to results/trec_result_{model}.txt...")
     pt.io.write_results(res, f"results/trec_result_{model}.txt", format="trec")
     return res
 
@@ -46,6 +48,7 @@ def evaluate_result(result):
     eval = pt.Utils.evaluate(result, qrels, metrics = ['map', Recall@1000, AP(rel=2), RR(rel=2), nDCG@3])
     return eval
 
+
 if __name__ == "__main__":
     init_pyterrier()
     index = init_indexer()
@@ -54,12 +57,12 @@ if __name__ == "__main__":
     bm_model = init_scorer(index, "BM25")
     tf_idf = init_scorer(index, "TF_IDF")
 
-    print("BM25 results...")
+    print("\nBM25 results...")
     result_bm = score_queries(bm_model)
     eval_bm = evaluate_result(result_bm)
-    print(eval_bm)
+    print(f"Evaluation Results: {eval_bm}")
 
-    print("TF_IDF results...")
+    print("\nTF_IDF results...")
     result_tf_idf = score_queries(tf_idf)
     eval_tf_idf = evaluate_result(result_tf_idf)
-    print(eval_tf_idf)
+    print(f"Evaluation Results: {eval_tf_idf}")

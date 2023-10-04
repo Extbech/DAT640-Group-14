@@ -1,3 +1,4 @@
+import os
 from typing import Dict, Generator
 import re
 import nltk
@@ -50,3 +51,18 @@ def load_collection(
                 break
             docno, text = line.rstrip().split("\t")
             yield {"docno": docno, "text": preprocess_text(text, lemmatizer)}
+
+
+def create_dir_if_not_exists(dir_name: str) -> None:
+    """
+    Create a directory if it does not already exist.
+
+    Args:
+        dir_name (str): The name of the directory to be created.
+
+    Returns:
+        None: No return value.
+    """
+    if not os.path.exists(dir_name):
+        os.mkdir(dir_name)
+        
