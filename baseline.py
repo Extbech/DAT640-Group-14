@@ -13,6 +13,7 @@ def init_pyterrier():
     if not pt.started():
         pt.init()
 
+
 def init_indexer():
     index_path = "./index"
     dataset_path = "datasets/collection.tsv"
@@ -24,10 +25,15 @@ def init_indexer():
         print("Loading Index from disk...")
     return pt.IndexFactory.of(index_path)
 
+
 def init_scorer(index, model):
     print(f"Initializing Scorer: {model}...")
-    bm25 = pt.BatchRetrieve(index, wmodel=model)
-    return bm25
+    if model.lower() == "bm25":
+        model_br = pt.BatchRetrieve(index, wmodel=model, controls={"bm25.k1": "1", "bm25.b": "0.5"})
+    else:
+        model_br = pt.BatchRetrieve(index, wmodel=model)
+    return model_br
+
 
 def score_queries(model):
     lemmatizer = WordNetLemmatizer()
@@ -42,11 +48,13 @@ def score_queries(model):
     pt.io.write_results(res, f"results/trec_result_{model}.txt", format="trec")
     return res
 
+
 def evaluate_result(result):
     qrels_path = "datasets/qrels_train.txt"
     qrels = pt.io.read_qrels(qrels_path)
-    eval = pt.Utils.evaluate(result, qrels, metrics = ['map', Recall@1000, AP(rel=2), RR(rel=2), nDCG@3])
+    eval = pt.Utils.evaluate(result, qrels, metrics = ['map', "recip_rank", Recall@1000, AP(rel=2), RR(rel=2), nDCG@3])
     return eval
+
 
 
 if __name__ == "__main__":
@@ -55,14 +63,10 @@ if __name__ == "__main__":
     logging.info(index.getCollectionStatistics())
 
     bm_model = init_scorer(index, "BM25")
-    tf_idf = init_scorer(index, "TF_IDF")
 
     print("\nBM25 results...")
     result_bm = score_queries(bm_model)
+    
     eval_bm = evaluate_result(result_bm)
     print(f"Evaluation Results: {eval_bm}")
 
-    print("\nTF_IDF results...")
-    result_tf_idf = score_queries(tf_idf)
-    eval_tf_idf = evaluate_result(result_tf_idf)
-    print(f"Evaluation Results: {eval_tf_idf}")
