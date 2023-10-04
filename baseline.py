@@ -3,7 +3,7 @@ import os
 from helper import *
 import pandas as pd
 from nltk.stem import WordNetLemmatizer
-from pyterrier.measures import *
+from pyterrier.measures import Recall, AP, RR, nDCG
 import logging
 logging.basicConfig(filename='baseline.log', format='%(asctime)s %(message)s', level=logging.INFO)
 
@@ -44,7 +44,7 @@ def score_queries(model):
 def evaluate_result(result):
     qrels_path = "datasets/qrels_train.txt"
     qrels = pt.io.read_qrels(qrels_path)
-    eval = pt.Utils.evaluate(result, qrels, metrics = [Recall@1000, AP(rel=2), RR(rel=2), nDCG@3])
+    eval = pt.Utils.evaluate(result, qrels, metrics = ['map', Recall@1000, AP(rel=2), RR(rel=2), nDCG@3])
     return eval
 
 if __name__ == "__main__":

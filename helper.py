@@ -19,7 +19,7 @@ def preprocess_text(text: str, lemmatizer) -> str:
     return " ".join([
         lemmatizer.lemmatize(term)
         for term in re.sub(r"[^\w]|_", " ", text).lower().split()
-        if term not in STOPWORDS and not re.search(r'\d', term)
+        if term not in STOPWORDS
     ])
 
 def load_collection(
