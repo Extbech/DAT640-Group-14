@@ -29,7 +29,6 @@ def init_scorer(index, model):
     bm25 = pt.BatchRetrieve(index, wmodel=model)
     return bm25
 
-
 def score_queries(model):
     lemmatizer = WordNetLemmatizer()
     queries_path = "datasets/queries_train.csv"
