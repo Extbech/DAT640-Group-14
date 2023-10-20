@@ -7,7 +7,7 @@ from pyterrier.measures import Recall, AP, RR, nDCG
 import logging
 logging.basicConfig(filename='advanced.log', format='%(asctime)s %(message)s', level=logging.INFO)
 
-import pyt_splade
+from sklearn.ensemble import RandomForestRegressor
 
 def init_pyterrier():
     print("Running...")
@@ -28,9 +28,25 @@ def init_indexer():
 
 
 def init_scorer(index):
-    print(f"Initializing Advanced Scorer...")
-    indxr_pipe = pyt_splade.SpladeFactory() >> index
-    return indxr_pipe
+    lemmatizer = WordNetLemmatizer()
+    ## Load Train Topics
+    queries_path = "datasets/queries_train.csv"
+    topics = pd.read_csv(queries_path)
+    topics = topics[["qid", "query"]]
+    topics["query"] = topics["query"].apply(lambda x: preprocess_text(x, lemmatizer))
+
+    ## Load Qrels
+    qrels_path = "datasets/qrels_train.txt"
+    qrels = pt.io.read_qrels(qrels_path)
+
+    rf = RandomForestRegressor(n_estimators=400)
+    bm25 = pt.BatchRetrieve(index, wmodel="BM25", controls={"bm25.k1": "1", "bm25.b": "0.5"})
+    tf = pt.BatchRetrieve(index, wmodel="Tf")
+    pl2 = pt.BatchRetrieve(index, wmodel="PL2")
+    pipeline = bm25 >> (tf ** pl2)
+    rf_pipe = pipeline >> pt.ltr.apply_learned_model(rf)
+    rf_pipe.fit(topics, qrels)
+    return pt.Experiment([bm25, rf_pipe], topics, qrels, eval_metrics = ['map', "recip_rank", Recall@1000, AP(rel=2), RR(rel=2), nDCG@3], names=["BM25 Baseline", "LTR"])
 
 
 
@@ -61,7 +77,8 @@ if __name__ == "__main__":
     index = init_indexer()
     logging.info(index.getCollectionStatistics())
 
-    bm_model = init_scorer(index)
+    res = init_scorer(index)
+    print(res)
 
     #print("\nBM25 results...")
     #result_bm = score_queries(bm_model)
