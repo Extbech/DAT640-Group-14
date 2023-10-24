@@ -5,6 +5,7 @@ import pandas as pd
 from nltk.stem import WordNetLemmatizer
 from pyterrier.measures import Recall, AP, RR, nDCG
 import logging
+
 logging.basicConfig(filename='advanced.log', format='%(asctime)s %(message)s', level=logging.INFO)
 
 from sklearn.ensemble import RandomForestRegressor
@@ -13,18 +14,6 @@ def init_pyterrier():
     print("Running...")
     if not pt.started():
         pt.init()
-
-
-def init_indexer():
-    index_path = "./index"
-    dataset_path = "datasets/collection.tsv"
-    if not os.path.exists(index_path):
-        print("Indexing documents...")
-        iter_indexer = pt.IterDictIndexer(index_path, pretokenised=True)
-        iter_indexer.index(load_collection(dataset_path))
-    else:
-        print("Loading Index from disk...")
-    return pt.IndexFactory.of(index_path)
 
 
 def init_scorer(index):
@@ -49,6 +38,9 @@ def init_scorer(index):
     return pt.Experiment([bm25, rf_pipe], topics, qrels, eval_metrics = ['map', "recip_rank", Recall@1000, AP(rel=2), RR(rel=2), nDCG@3], names=["BM25 Baseline", "LTR"])
 
 
+def index_colbert(dataset_path, index_path):
+    indexer = ColBERTIndexer("http://www.dcs.gla.ac.uk/~craigm/colbert.dnn.zip", index_path, "index_colbert", chunksize=3)
+    indexer.index(load_collection(dataset_path))
 
 def score_queries(model):
     lemmatizer = WordNetLemmatizer()
@@ -74,14 +66,6 @@ def evaluate_result(result):
 
 if __name__ == "__main__":
     init_pyterrier()
-    index = init_indexer()
-    logging.info(index.getCollectionStatistics())
-
-    res = init_scorer(index)
-    print(res)
-
-    #print("\nBM25 results...")
-    #result_bm = score_queries(bm_model)
-
-    #eval_bm = evaluate_result(result_bm)
-    #print(f"Evaluation Results: {eval_bm}")
+    from pyterrier_colbert.indexing import ColBERTIndexer
+    import faiss
+    index_colbert("datasets/collection.tsv", "./colbert_index")
