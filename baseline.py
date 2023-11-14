@@ -5,14 +5,13 @@ import pandas as pd
 from nltk.stem import WordNetLemmatizer
 from pyterrier.measures import Recall, AP, RR, nDCG
 import logging
-logging.basicConfig(filename='baseline.log', format='%(asctime)s %(message)s', level=logging.INFO)
 
+logging.basicConfig(filename='baseline.log', format='%(asctime)s %(message)s', level=logging.INFO)
 
 def init_pyterrier():
     print("Running...")
     if not pt.started():
         pt.init()
-
 
 def init_indexer():
     index_path = "./index"
@@ -25,7 +24,6 @@ def init_indexer():
         print("Loading Index from disk...")
     return pt.IndexFactory.of(index_path)
 
-
 def init_scorer(index, model):
     print(f"Initializing Scorer: {model}...")
     if model.lower() == "bm25":
@@ -33,7 +31,6 @@ def init_scorer(index, model):
     else:
         model_br = pt.BatchRetrieve(index, wmodel=model)
     return model_br
-
 
 def score_queries(model):
     lemmatizer = WordNetLemmatizer()
@@ -48,14 +45,11 @@ def score_queries(model):
     pt.io.write_results(res, f"results/trec_result_{model}.txt", format="trec", run_name="BM25")
     return res
 
-
 def evaluate_result(result):
     qrels_path = "datasets/qrels_train.txt"
     qrels = pt.io.read_qrels(qrels_path)
     eval = pt.Utils.evaluate(result, qrels, metrics = ['map', "recip_rank", Recall@1000, AP(rel=2), RR(rel=2), nDCG@3])
     return eval
-
-
 
 if __name__ == "__main__":
     init_pyterrier()
@@ -69,4 +63,3 @@ if __name__ == "__main__":
 
     eval_bm = evaluate_result(result_bm)
     print(f"Evaluation Results: {eval_bm}")
-
