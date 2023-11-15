@@ -162,6 +162,8 @@ cython_debug/
 /datasets
 /index
 /index_advanced
+/index_test
 /trec_eval
 /results
+/docT5Query
 *.json

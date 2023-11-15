@@ -33,11 +33,10 @@ def init_scorer(index, model):
     return model_br
 
 def score_queries(model):
-    lemmatizer = WordNetLemmatizer()
     queries_path = "datasets/queries_train.csv"
     topics = pd.read_csv(queries_path)
     topics = topics[["qid", "query"]]
-    topics["query"] = topics["query"].apply(lambda x: preprocess_text(x, lemmatizer))
+    topics["query"] = topics["query"].apply(lambda x: preprocess_text(x))
 
     res = model.transform(topics)
     create_dir_if_not_exists("results")
