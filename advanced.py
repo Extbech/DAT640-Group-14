@@ -26,7 +26,7 @@ def init_indexer():
 def run_mono_duo(mono_reranking=1000, duo_reranking=50):
     monoT5 = MonoT5ReRanker()
     duoT5 = DuoT5ReRanker()
-    bm25 = pt.BatchRetrieve(index, wmodel="BM25")
+    bm25 = pt.BatchRetrieve(index, wmodel="BM25", controls={"bm25.k1": "0.82", "bm25.b": "0.68"})
     mono_pipeline = bm25 % mono_reranking >> pt.text.get_text(index, "text") >> monoT5
     duo_pipeline = mono_pipeline % duo_reranking >> duoT5
     return duo_pipeline.transform(topics)
@@ -42,7 +42,7 @@ if __name__ == "__main__":
     index = init_indexer()
     logging.info(index.getCollectionStatistics())
 
-    set = "train"
+    set = "test"
     topics = load_queries(set)
     mono_reranking = 100
     duo_reranking = 10
@@ -53,4 +53,4 @@ if __name__ == "__main__":
     submission_name = "monoDuo"
     pt.io.write_results(result, f"results/trec_result_{submission_name}.txt", format="trec", run_name=submission_name)
     if set == "test":
-        create_submission(submission_name)
+        create_submission(submission_name, duo_reranking)

@@ -60,7 +60,7 @@ def load_queries(
     Returns:
         pd.DataFrame: DataFrame with "qid" and "query" columns.
     """
-    queries_path = "datasets/queries_train.csv"
+    queries_path = f"datasets/queries_{set}.csv"
     topics = pd.read_csv(queries_path)
     topics = topics[["qid", "query"]]
     topics["query"] = topics["query"].apply(lambda x: preprocess_text(x))
@@ -103,8 +103,8 @@ def create_submission(
     results = results.drop('group', axis=1)
     results.rename(columns={"docno": "docid"}, inplace=True)
     results = results[["qid", "docid"]]
-
-    results.to_csv("./results/trec_result_expandoMonoDuo_submit2.csv", index=None)
+    
+    results.to_csv(f"./results/trec_result_{submission_name}.csv", index=None)
 
 def create_dir_if_not_exists(dir_name: str) -> None:
     """
