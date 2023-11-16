@@ -4,13 +4,15 @@ from helper import *
 from pyterrier.measures import Recall, AP, RR, nDCG
 import logging
 from pyterrier_t5 import MonoT5ReRanker, DuoT5ReRanker
+from transformers import AutoTokenizer
 
 logging.basicConfig(filename='advanced.log', format='%(asctime)s %(message)s', level=logging.INFO)
 
 def init_pyterrier():
     print("Running...")
     if not pt.started():
-        pt.init()
+        # pt.init()
+        pt.init(boot_packages=["com.github.terrierteam:terrier-prf:-SNAPSHOT"])
 
 def init_indexer():
     index_path = "./index_advanced"
@@ -26,7 +28,7 @@ def init_indexer():
 def run_mono_duo(mono_reranking=1000, duo_reranking=50):
     monoT5 = MonoT5ReRanker()
     duoT5 = DuoT5ReRanker()
-    bm25 = pt.BatchRetrieve(index, wmodel="BM25", controls={"bm25.k1": "0.82", "bm25.b": "0.68"})
+    bm25 = pt.BatchRetrieve(index, wmodel="BM25", controls={"bm25.k1": "0.82", "bm25.b": "0.68", "qe": "on", "qemodel": "Bo1"})
     mono_pipeline = bm25 % mono_reranking >> pt.text.get_text(index, "text") >> monoT5
     duo_pipeline = mono_pipeline % duo_reranking >> duoT5
     return duo_pipeline.transform(topics)
@@ -42,15 +44,17 @@ if __name__ == "__main__":
     index = init_indexer()
     logging.info(index.getCollectionStatistics())
 
-    set = "test"
+    set = "train"
     topics = load_queries(set)
     mono_reranking = 100
     duo_reranking = 10
     result = run_mono_duo(mono_reranking, duo_reranking)
     sort_result(result, duo_reranking)
-    print(evaluate_result(result))
+    
+    if set == "train":
+        print(evaluate_result(result))
 
     submission_name = "monoDuo"
-    pt.io.write_results(result, f"results/trec_result_{submission_name}.txt", format="trec", run_name=submission_name)
+    pt.io.write_results(result, f"results/trec_result_{set}_{submission_name}.txt", format="trec", run_name=submission_name)
     if set == "test":
         create_submission(submission_name, duo_reranking)

@@ -97,14 +97,14 @@ def create_submission(
         submission_name (str): Name of the submission.
         number_of_rankings (int): Number of rankings per query in the result.
     """
-    results = pt.io.read_results(f"./results/trec_result_{submission_name}.txt", format="trec")
+    results = pt.io.read_results(f"./results/trec_result_test_{submission_name}.txt", format="trec")
     results['group'] = [i // number_of_rankings for i in range(len(results))]
     results = results.groupby('group').head(3).reset_index(drop=True)
     results = results.drop('group', axis=1)
     results.rename(columns={"docno": "docid"}, inplace=True)
     results = results[["qid", "docid"]]
     
-    results.to_csv(f"./results/trec_result_{submission_name}.csv", index=None)
+    results.to_csv(f"./results/trec_result_test_{submission_name}.csv", index=None)
 
 def create_dir_if_not_exists(dir_name: str) -> None:
     """
