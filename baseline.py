@@ -2,7 +2,6 @@ import pyterrier as pt
 import os
 from helper import *
 import pandas as pd
-from nltk.stem import WordNetLemmatizer
 from pyterrier.measures import Recall, AP, RR, nDCG
 import logging
 
@@ -26,10 +25,7 @@ def init_indexer():
 
 def init_scorer(index, model):
     print(f"Initializing Scorer: {model}...")
-    if model.lower() == "bm25":
-        model_br = pt.BatchRetrieve(index, wmodel=model, controls={"bm25.k1": "1", "bm25.b": "0.5"})
-    else:
-        model_br = pt.BatchRetrieve(index, wmodel=model)
+    model_br = pt.BatchRetrieve(index, wmodel=model, controls={"bm25.k1": "0.82", "bm25.b": "0.68"}, num_results=3)
     return model_br
 
 def score_queries(model):
@@ -56,9 +52,4 @@ if __name__ == "__main__":
     logging.info(index.getCollectionStatistics())
 
     bm_model = init_scorer(index, "BM25")
-
-    print("\nBM25 results...")
-    result_bm = score_queries(bm_model)
-
-    eval_bm = evaluate_result(result_bm)
-    print(f"Evaluation Results: {eval_bm}")
+    score_queries(bm_model)
