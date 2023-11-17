@@ -4,10 +4,10 @@ from helper import *
 from pyterrier.measures import Recall, AP, RR, nDCG, MRR
 import logging
 from pyterrier_t5 import MonoT5ReRanker, DuoT5ReRanker
-from transformers import AutoTokenizer
-from sklearn.ensemble import RandomForestRegressor
+from transformers import AutoTokenizer, AutoModelForSeq2SeqLM
 
 logging.basicConfig(filename='advanced.log', format='%(asctime)s %(message)s', level=logging.INFO)
+os.environ["CUDA_VISIBLE_DEVICES"] = "1"
 
 def init_pyterrier():
     print("Running...")
@@ -31,25 +31,28 @@ def init_index_expanded():
         iter_indexer.index(load_collection(dataset_path))
     return pt.IndexFactory.of(index_path)
 
-def run_mono_duo(mono_reranking=1000, duo_reranking=50):
+def context_rewrite(topics, tok, model_rewrite):
+    return_queries = []
+    for _, entry in topics.iterrows():
+        conversation_history = topics[(topics['topic_number'] == entry['topic_number']) & (topics['turn_number'] < entry['turn_number'])]
+        context_input = "|||".join(conversation_history['query'].tolist() + [entry['query']])
+        input_ids = tok.encode(context_input, return_tensors="pt")
+        outputs = model_rewrite.generate(input_ids, max_length=512)
+        query_rewrite = tok.decode(outputs[0], skip_special_tokens=True)
+        return_queries.append(preprocess_text(query_rewrite))
+    return return_queries
+
+def run_mono_duo(topics, mono_reranking=1000, duo_reranking=50):
     index_baseline = init_index_baseline()
     index_expanded = init_index_expanded()
     monoT5 = MonoT5ReRanker(batch_size=4)
     duoT5 = DuoT5ReRanker(batch_size=4)
     bm25_1 = pt.BatchRetrieve(index_expanded, wmodel="BM25", verbose=True, num_results=1000, controls={"bm25.k1": "0.82", "bm25.b": "0.68"})
-    bm25_2 = pt.BatchRetrieve(index_expanded, wmodel="BM25", verbose=True, num_results=1000)
-    rm3 = pt.rewrite.RM3(index_baseline, fb_terms=10, fb_docs=10, fb_lambda=0.6)
-    aqe = pt.rewrite.AxiomaticQE(index_baseline, fb_terms=10, fb_docs=10)
-    kl = pt.rewrite.KLQueryExpansion(index_baseline)
-    sdm = pt.rewrite.SequentialDependence()
-    pipeline = bm25_1 >> rm3 >> bm25_2 # Gives good baseline results.
-    # pipeline = bm25_1 >> aqe >> bm25_2 # Gives worse results than above expansion.
-    # pipeline = bm25_1 % mono_reranking >> pt.text.get_text(index_baseline, "text") >> monoT5 % duo_reranking >> duoT5
-    # pipeline = bm25_1 >> rm3 >> bm25_2 % mono_reranking >> pt.text.get_text(index_baseline, "text") >> pt.rewrite.reset() >> monoT5
-    # pipeline = bm25 >> rm3 >> bm25 % mono_reranking >> pt.text.get_text(index_baseline, "text") >> monoT5 % duo_reranking >> duoT5
-    # mono_pipeline = bm25 % mono_reranking >> pt.text.get_text(index_baseline, "text") >> monoT5
-    # duo_pipeline = mono_pipeline % duo_reranking >> duoT5
-    return pipeline.transform(topics)
+    tok = AutoTokenizer.from_pretrained("castorini/t5-base-canard")
+    model_rewrite = AutoModelForSeq2SeqLM.from_pretrained("castorini/t5-base-canard")
+    topics["query"] = context_rewrite(topics, tok, model_rewrite)
+    pipeline = bm25_1 % mono_reranking >> pt.text.get_text(index_baseline, "text") >> monoT5 % duo_reranking >> duoT5
+    return pipeline.transform(topics[["qid", "query"]])
 
 def evaluate_result(result):
     qrels_path = "datasets/qrels_train.txt"
@@ -60,17 +63,18 @@ def evaluate_result(result):
 if __name__ == "__main__":
     init_pyterrier()
     
-    set = "train"
+    set = "test"
     topics = load_queries(set)
     mono_reranking = 50
     duo_reranking = 10
-    result = run_mono_duo(mono_reranking, duo_reranking)
+    result = run_mono_duo(topics, mono_reranking, duo_reranking)
+
     sort_result(result, duo_reranking)
     
     if set == "train":
         print(evaluate_result(result))
 
-    submission_name = "bm25"
+    submission_name = "expandoMonoDuo"
     pt.io.write_results(result, f"results/trec_result_{set}_{submission_name}.txt", format="trec", run_name=submission_name)
     if set == "test":
         create_submission(submission_name, duo_reranking)
