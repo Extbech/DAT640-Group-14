@@ -62,8 +62,6 @@ def load_queries(
     """
     queries_path = f"datasets/queries_{set}.csv"
     topics = pd.read_csv(queries_path)
-    topics = topics[["qid", "query"]]
-    topics["query"] = topics["query"].apply(lambda x: preprocess_text(x))
     return topics
 
 def sort_result(

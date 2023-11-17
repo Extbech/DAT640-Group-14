@@ -161,6 +161,8 @@ cython_debug/
 
 /datasets
 /index
+/index_baseline
+/index_expanded
 /index_advanced
 /index_test
 /trec_eval
